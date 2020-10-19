@@ -1,5 +1,5 @@
 export class RotationMatrix {
-	matrix = [1.0, 0.0, 0, 0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+	matrix = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
 	radions = { x: 0.0, y: 0.0, z: 0.0 };
 
 	makeRotationMatrix() {
@@ -31,7 +31,7 @@ export class RotationMatrix {
 	// -- multMatrix3x3
 	// -------------------------------------------
 	multMatrix3x3(a, b) {
-		const m = [1.0, 0.0, 0, 0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
+		const m = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
 
 		m[0] = a[0] * b[0] + a[1] * b[3] + a[2] * b[6];
 		m[1] = a[0] * b[1] + a[1] * b[4] + a[2] * b[7];
@@ -78,8 +78,8 @@ export class RotationMatrix {
 	// -------------------------------------------
 	// -- addQuats
 	// -------------------------------------------
-	addQuats(q1, q2, d) {
-		console.log("refactor addQuats");
+	addQuats(q1, q2) {
+		// console.log("refactor addQuats");
 		const t1 = [0.0, 0.0, 0.0, 0.0];
 		const t2 = [0.0, 0.0, 0.0, 0.0];
 		const t3 = [0.0, 0.0, 0.0, 0.0];
@@ -97,12 +97,12 @@ export class RotationMatrix {
 
 		tf[3] = q1[3] * q2[3] - this.vDot(q1, q2);
 
-		d[0] = tf[0];
-		d[1] = tf[1];
-		d[2] = tf[2];
-		d[3] = tf[3];
+		// d[0] = tf[0];
+		// d[1] = tf[1];
+		// d[2] = tf[2];
+		// d[3] = tf[3];
 
-		return d;
+		return tf;
 		// -- add normalizeation
 	}
 
@@ -189,7 +189,7 @@ export class RotationMatrix {
 	// -- vAdd
 	// -------------------------------------------
 	vAdd(v1, v2, d) {
-		d[0] = v1[1] + v2[0];
+		d[0] = v1[0] + v2[0];
 		d[1] = v1[1] + v2[1];
 		d[2] = v1[2] + v2[2];
 	}

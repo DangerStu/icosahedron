@@ -4,7 +4,7 @@ import "./style.scss";
 import $ from "jquery";
 import { Observable, merge, fromEvent, interval } from "rxjs";
 import { map, mapTo } from "rxjs/operators";
-import { mouseenterAsObservable, mouseleaveAsObservable } from "rx-jquery";
+// import { mouseenterAsObservable, mouseleaveAsObservable } from "rx-jquery";
 
 import { arccos, arcsin } from "./asin";
 import { getVertices } from "./vertices";
@@ -13,42 +13,65 @@ import { RotationMatrix } from "./rotationMatrix";
 
 const CENTER = 200;
 const RADIUS = 150;
-const SPRITE_WIDTH = 80;
+const SPRITE_WIDTH = 60;
 const ONE_DEGREE = 6.28319 / 360;
 
+const modes = {
+	FLOAT: 0,
+	DRAG_WITH_MOUSE: 1,
+};
+
 function stage() {
-	return $("<div></div>").addClass("stage");
+	return $("<div><div class='backdrop'></div></div>").addClass("stage");
 }
 
 function debug() {
-	return $("<div>Hello</div>").addClass("debug");
+	return $("<div><div></div><div></div></div>").addClass("debug");
 }
 
 const Hedron = {
 	sprites: [],
 	$parent: null,
 	$debug: null,
+	$debugDivs: null,
 	timer: null,
 	observable: null,
 	currentId: -1,
-	mousePoint: { x: 0, y: 0 },
-	displayList: [],
-
-	rotMatrix: [1.0, 0.0, 0, 0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0],
-	angles: [0.0, 0.0, 0.0],
+	pressedId: -1,
+	screenMousePoint: { x: 0, y: 0 },
+	stageMousePoint: { x: 0, y: 0 },
+	lastStageMousePoint: { x: 0, y: 0 },
+	mouseDown: false,
+	mode: modes.FLOAT,
 
 	mountToParent: function ($parent, $debug) {
 		this.$parent = $parent;
 		this.$debug = $debug;
+		this.$debugDivs = $debug.find("div");
 
 		return this;
 	},
 
 	trackMouse: function () {
-		$(document).on("mousemove", (event) => {
-			// console.log(this.mousePoint);
-			this.mousePoint = { x: event.pageX, y: event.pageY };
-		});
+		const mouseDebugInfo = () =>
+			this.$debugDivs.eq(1).html(`x: ${this.stageMousePoint.x} y: ${this.stageMousePoint.y} down: ${this.mouseDown} dfm: ${this._disatanceFormMiddle()}`);
+		$(document)
+			.on("mousemove", (event) => {
+				// console.log(this.screenMousePoint);
+				this.screenMousePoint = { x: event.pageX, y: event.pageY };
+				this.stageMousePoint = { x: event.pageX - this.$parent.offset().left, y: event.pageY - this.$parent.offset().top };
+
+				mouseDebugInfo();
+			})
+			.on("mouseup", () => {
+				this.mouseDown = false;
+				mouseDebugInfo();
+			})
+			.on("mousedown", () => {
+				this.mouseDown = true;
+				mouseDebugInfo();
+			});
+
 		return this;
 	},
 
@@ -101,7 +124,7 @@ const Hedron = {
 				default:
 					break;
 			}
-			_that.$debug.html(_that.currentId !== -1 ? `over: ${_that.currentId}` : ``);
+			_that.$debugDivs.eq(0).html(_that.currentId !== -1 ? `over: ${_that.currentId}` : ``);
 		});
 		return this;
 	},
@@ -111,18 +134,40 @@ const Hedron = {
 
 		let tagSprite = new Observable((subscriber) => {
 			this.timer = setInterval(() => {
-				//trackerball.rotationMatrix.radions.x += 1.0 * ONE_DEGREE;
-				// trackerball.rotationMatrix.radions.z += 1.0 * ONE_DEGREE;
-				//trackerball.rotationMatrix.makeRotationMatrix();
+				switch (this.mode) {
+					case modes.DRAG_WITH_MOUSE:
+						if (_that.mouseDown) {
+							const currentMouse = { ...this.stageMousePoint };
+							const dx = parseFloat(currentMouse.x - this.lastStageMousePoint.x) / 400;
+							const dy = parseFloat(currentMouse.y - this.lastStageMousePoint.y) / 400;
+							trackerball.trackballCalcRotMatrix(dy, dx);
+							this.lastStageMousePoint = currentMouse;
+						} else {
+							_that.setMode(modes.FLOAT);
+						}
+						break;
+					default:
+						// float
+						// trackerball.rotationMatrix.radions.x += 1.0 * ONE_DEGREE;
+						// trackerball.rotationMatrix.radions.z += 1.0 * ONE_DEGREE;
+						// trackerball.rotationMatrix.makeRotationMatrix();
+						trackerball.trackballCalcRotMatrix(0.005, 0.0025);
 
-				//trackerball.trackballCalcRotMatrix(0.01, 0.0025);
+						// trackerball.trackballCalcRotMatrix(0.0, 0.01);
+						//console.log(trackerball.rotationMatrix.matrix);
 
-				trackerball.trackballCalcRotMatrix(0.01, 0.0);
+						if (_that.mouseDown && _that._disatanceFormMiddle() < CENTER) {
+							_that.pressedId = _that.currentId;
+							_that.setMode(modes.DRAG_WITH_MOUSE);
+						}
+
+						break;
+				}
 				this.sprites.forEach((sprite) => {
 					sprite.animate();
 				});
 
-				var collidingElement = document.elementFromPoint(this.mousePoint.x, this.mousePoint.y);
+				var collidingElement = document.elementFromPoint(this.screenMousePoint.x, this.screenMousePoint.y);
 				if (collidingElement != null && collidingElement.className == "sprite") {
 					let id = +collidingElement.id.replace(/sprite-(\d+)/g, "$1");
 
@@ -144,7 +189,23 @@ const Hedron = {
 		return this;
 	},
 
-	// createSpriteDiv()
+	setMode(mode) {
+		this.mode = mode;
+		switch (mode) {
+			case modes.DRAG_WITH_MOUSE:
+				this.lastStageMousePoint = { ...this.stageMousePoint };
+				break;
+
+			default:
+			case modes.FLOAT:
+				break;
+		}
+		return this;
+	},
+
+	_disatanceFormMiddle() {
+		return Math.sqrt(Math.pow(this.stageMousePoint.x - CENTER, 2) + Math.pow(this.stageMousePoint.y - CENTER, 2));
+	},
 };
 
 class Sprite {
@@ -249,17 +310,28 @@ $(() => {
 	$stage.appendTo("body");
 	const $debug = debug();
 	$debug.appendTo($stage);
-	const vertices = getVertices(6);
 
 	rotationMatrix.makeRotationMatrix();
-	const sprites = [
-		{ id: 0, animationControler: new HedronCntrl(vertices[0]), content: "0" },
-		{ id: 1, animationControler: new HedronCntrl(vertices[1]), content: "1" },
-		{ id: 2, animationControler: new HedronCntrl(vertices[2]), content: "2" },
-		{ id: 3, animationControler: new HedronCntrl(vertices[3]), content: "3" },
-		{ id: 4, animationControler: new HedronCntrl(vertices[4]), content: "4" },
-		{ id: 5, animationControler: new HedronCntrl(vertices[5]), content: "5" },
-	];
+
+	const content = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+	console.log(content.length);
+	const vertices = getVertices(content.length);
+
+	const sprites = _.map(content, (obj, index) => {
+		return {
+			id: index,
+			animationControler: new HedronCntrl(vertices[index]),
+			content: obj,
+		};
+	});
+	// }
+	// 	{  },
+	// 	{ id: 1, animationControler: new HedronCntrl(vertices[1]), content: "1" },
+	// 	{ id: 2, animationControler: new HedronCntrl(vertices[2]), content: "2" },
+	// 	{ id: 3, animationControler: new HedronCntrl(vertices[3]), content: "3" },
+	// 	{ id: 4, animationControler: new HedronCntrl(vertices[4]), content: "4" },
+	// 	{ id: 5, animationControler: new HedronCntrl(vertices[5]), content: "5" },
+	// ];
 
 	// console.log("d", d);
 

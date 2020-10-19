@@ -12,7 +12,7 @@
 /* } */
 
 $body-color: green;
-$body-background-color: black;
+$body-background-color: #828282;
 
 body {
 	color: $body-color;
@@ -20,36 +20,61 @@ body {
 	.stage {
 		// color: $body-color;
 		// background-color: azure;
-		background: radial-gradient(#333333, #aaa);
+		//background: radial-gradient(#333333, #aaa);
 		width: 400px;
 		height: 440px;
 		margin: 0 auto;
 		position: relative;
 
+		.backdrop {
+			background: radial-gradient(#222222, #aaa);
+			width: 400px;
+			height: 400px;
+			position: absolute;
+			top: 0;
+			left: 0;
+			border-radius: 100%;
+		}
+
 		.debug {
 			position: absolute;
 			left: 0;
 			right: 0;
-			bottom: 0;
-			height: 30px;
+			bottom: -10px;
+			height: 40px;
 			background-color: $body-background-color;
-			color: $body-color;
+			color: #fff;
+			display: flex;
+			flex-direction: row;
+			align-items: stretch;
+			font-family: "Lucida Sans", "Lucida Sans Regular", "Lucida Grande", "Lucida Sans Unicode", Geneva, Verdana, sans-serif;
+			font-size: 10px;
+
+			div {
+				flex: 1;
+				border: solid 1px black;
+				padding: 0.2rem 1rem;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+			}
 		}
 
 		.sprite {
 			color: white;
 			position: absolute;
-			width: 80px;
-			height: 80px;
+			width: 60px;
+			height: 60px;
 			/* padding: 10px; */
-			line-height: 80px;
-			font-size: 40px;
+			line-height: 60px;
+			font-size: 30px;
 			text-align: center;
 			font-family: sans-serif;
 			/* background-color: black; */
 			border-radius: 100%;
 			background: radial-gradient(#ee3232, #663333);
 			cursor: pointer;
+			user-select: none;
 		}
 	}
 }

@@ -18,7 +18,7 @@ export class TrackerBall {
 	// -- initTrackball
 	// -------------------------------------------
 	constructor(rotationMatrix) {
-		console.log("rotationMatrix");
+		console.log("rotationMatrix", rotationMatrix.matrix);
 		// debugger;
 		this.rotationMatrix = rotationMatrix;
 		this.gTrackballSize = 0.6;
@@ -76,14 +76,8 @@ export class TrackerBall {
 	// -- trackballCalcRotMatrix
 	// -------------------------------------------
 	trackballCalcRotMatrix(dx, dy) {
-		console.log("dx", dx, "dy", dy, "this.inRange(2.0 * dx)", this.inRange(2.0 * dx), "this.inRange(2.0 * dy)", this.inRange(2.0 * dy));
-		// console.log(dx, dy, this.inRange(2.0 * dx), this.inRange(2.0 * dy));
 		this.gLastQuat = this.trackballCalcQuat(this.gLastQuat, 0, 0, this.inRange(2.0 * dx), this.inRange(2.0 * dy));
-		//console.log(this.gLastQuat, this.gCurrQuat);
-
-		this.gCurrQuat = this.rotationMatrix.addQuats(this.gLastQuat, this.gCurrQuat, this.gCurrQuat);
-		//console.log(this.gLastQuat, this.gCurrQuat);
-
+		this.gCurrQuat = this.rotationMatrix.addQuats(this.gLastQuat, this.gCurrQuat); //, this.gCurrQuat);
 		this.rotationMatrix.quatToMatrix3x3(this.gCurrQuat);
 	}
 
@@ -91,9 +85,9 @@ export class TrackerBall {
 	// -- inRange
 	// -------------------------------------------
 	inRange(x) {
-		x = x > 1.0 ? 1.0 : x;
-		x = x < -1.0 ? -1.0 : x;
-		return x;
+		// x = x > 1.0 ? 1.0 : x;
+		// x = x < -1.0 ? -1.0 : x;
+		// return x;
 
 		x = Math.max(-1.0, x);
 		return Math.min(1.0, x);
@@ -113,13 +107,13 @@ export class TrackerBall {
 		let t = 0.0;
 
 		// -- check for movement
-		if (p1x == p2x && p1y == p2y) {
-			// -- Zero rotation
-			this.rotationMatrix.vZero(quat);
-			quat[3] = 1.0;
-			return quat;
-		}
-
+		// if (p1x == p2x && p1y == p2y) {
+		// 	// -- Zero rotation
+		// 	this.rotationMatrix.vZero(quat);
+		// 	quat[3] = 1.0;
+		// 	return quat;
+		// }
+		debugger;
 		// -- figure out z-coords for projection of p1 & p2 to sphere
 		this.rotationMatrix.vSet(p1, p1x, p1y, this.trackballProjToSphere(this.gTrackballSize, p1x, p1y));
 		this.rotationMatrix.vSet(p2, p2x, p2y, this.trackballProjToSphere(this.gTrackballSize, p2x, p2y));
@@ -138,7 +132,7 @@ export class TrackerBall {
 
 		//const x =
 		this.trackballAxisToQuat(a, phi, quat);
-		console.log(quat);
+		// console.log(quat);
 		return quat;
 		// return this.trackballAxisToQuat(a, phi, quat);
 	}
@@ -165,10 +159,10 @@ export class TrackerBall {
 		let z;
 		if (d < r * 0.7071067811865475244) {
 			// -- inside sphere
-			console.log("inside");
+			// console.log("inside");
 			z = parseFloat(Math.sqrt(r * r - d * d));
 		} else {
-			console.log("outside");
+			// console.log("outside");
 			t = r / 1.4142135623730950488;
 			z = (t * t) / d;
 		}
